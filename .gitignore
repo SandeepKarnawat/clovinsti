@@ -1,0 +1,12 @@
+.vscode/
+static_my_proj
+*.pc
+*.pyc
+*.pyo
+__pycache__
+.deps
+.libs
+/_build/
+clovinsti/__pycache__/
+courses/__pycache__/
+clovinsti/settings/local.py

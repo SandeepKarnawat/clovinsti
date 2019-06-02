@@ -1,0 +1,20 @@
+<!doctype html>
+{% load static %}
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+     
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js"></script>     
+    {% include "base/css.html" %} 
+    <title>{{title}}</title>
+  </head>
+  <body>
+  {% include "base/navbar.html" with brand=brand_name%}      
+  {% block content %}{% endblock %}
+  {% include "base/js.html" %}
+  {% block javascript %}{% endblock %}
+  </body>
+</html>

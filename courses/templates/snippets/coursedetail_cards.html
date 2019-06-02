@@ -1,0 +1,9 @@
+<div class="card mb-3" style="width: 18rem;">
+    <img class="card-img-top" style="height: 20rem;" src="{{obj.image.url}}" alt="{{obj.subject}} image">
+    <div class="card-body">
+        <h5 class="card-title">{{obj.subject}}</h5>
+        <p class="card-text">{{obj.description| truncatewords:15}}</p>
+        <!--<a href="{{obj.get_absolute_url}}" class="btn btn-primary">Go</a> -->
+        <a href="{% if quiz == "1" %}{{obj.get_quiz_absolute_url}} {% else %}{{obj.get_absolute_url}} {% endif %}" class="btn btn-primary">Go</a>
+    </div>
+</div>

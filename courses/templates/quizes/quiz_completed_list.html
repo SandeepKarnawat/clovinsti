@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{%block content%}
+<div class="container">
+    <div class="row">
+        {% if object_list %}
+        {% for obj in object_list %}
+            <div class="col">
+                <div class="card mb-3" style="width: 18rem;">
+                    <img class="card-img-top" src="{{obj.quiz.image.url}}" alt="{{obj.quiz.title}} image">
+                    <div class="card-body">
+                        <h5 class="card-title">{{obj.quiz.title}}</h5>
+                        <p class="card-text">{{obj.quiz.description| truncatewords:15}}</p>
+                        <!--<a href="{{obj.get_absolute_url}}" class="btn btn-primary">Go</a> -->
+                        <a href="{{obj.get_result_absolute_url}}" class="btn btn-primary">Result</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                <h3>You haven't attempted any quiz yet!</h3>
+              </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

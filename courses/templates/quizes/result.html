@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load define %}
+{%block content%}
+
+<div class="container">
+        <div class="alert alert-info" role="alert">
+            <p class="h3 mb-3 font-weight-normal text-center">Results</p>
+            <p class="h5 mb-3 font-weight-normal text-center">Quiz: {{object.name}}</p>
+            <div class="col-3 mx-auto">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th scope="row">Right Answered</th>
+                            <td>{{object.correctAnswers}}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Total Questions</th>
+                            <td>{{object.totalQuestions}}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Percentage</th>
+                            <td>{% percentage object.correctAnswers object.totalQuestions %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <span class="text-left text-secondary">click questions to view answers</span>
+    <!-- <div id="accordion"> -->
+        {% for singleResult in object.questionDetail %}
+
+        {% if singleResult.isCorrectAns %}
+            {% define "btn-outline-success" as questionColor %} 
+        {%else%}
+            {% define "btn-outline-danger" as questionColor %} 
+        {% endif %}
+        {% define forloop.counter as loopCounter %}
+        <div class="card">
+            <div class="card-header " id="headingOne">
+            <h5 class="mb-0 ">
+                <button class="btn {{questionColor}} col-12 text-left" data-toggle="collapse" data-target="#ansCard{{loopCounter}}" aria-expanded="true" aria-controls="collapseOne">
+                Q {{singleResult.qno}}: {{singleResult.question}} 
+                </button>
+            </h5>
+            </div>
+        
+            <div id="ansCard{{loopCounter}}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    {% if singleResult.mcq != True %}
+                        {% define "radio" as inputType %}
+                    {%else%}
+                        {% define "checkbox" as inputType %}
+                    {% endif %}
+                    
+                    {% for choice in singleResult.choices %}
+                        {% if choice.actual and choice.actual != choice.expected %}
+                            {% define "text-danger" as textClass %}
+                        {% elif choice.expected %}
+                            {% define "text-success" as textClass %}
+                        {% else %}
+                            {% define "text-muted" as textClass %}
+                        {% endif %}
+                        <div class="form-check mb-1">
+                            <input disabled {% if choice.actual %}checked{%endif%} class="form-check-input" type="{{inputType}}" name="answer{{loopCounter}}"  value="{{choiceid}}">
+                            <label class="form-check-label {{textClass}}" for="{{choiceid}}">
+                                {{choice.choice}}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+<!-- </div> -->
+{% endblock %}

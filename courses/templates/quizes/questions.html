@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load define %}
+{%block content%}
+<div class="container">
+    <div class="row no-gutters">
+        <div class="col-8 mx-auto">
+            <div class="alert alert-secondary" role="alert">
+                <form method="POST">{% csrf_token %}
+                    <input id="questionId" name="questionId" type="hidden" value="{{object.qid}}">
+                    <input id="quizId" name="quizId" type="hidden" value="{{object.quizid}}">
+                    Q {{object.qno}}: {{object.question}}
+                    <p>
+                        {% if object.mcq != True %}
+                            {% define "radio" as inputType %}
+                        {% else %}
+                            {% define "checkbox" as inputType %}
+                        {% endif %}
+                        
+                        {% for choice in object.choices %}
+                            <div class="form-check">
+                                <input class="form-check-input" {%if choice.answered%}checked{%endif%} type="{{inputType}}" name="answer"  value="{{forloop.counter}}">
+                                <label class="form-check-label" for="{{forloop.counter}}">
+                                    {{choice.choice}}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </p>  
+                    <p>
+                        <br><br>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </p>
+                </form>  
+            </div>
+        </div>
+    </div>
+    <div class="row no-gutters">
+        <div class="col-8 mx-auto">
+            <div class="clearfix">
+                <button type="button" class="btn btn-secondary float-left"
+                onclick="window.location.href='/quiz/questions/{{object.quizid}}/{{object.qid}}/prev'" 
+                {%if object.prev_disable == "1" %} disabled {%endif%}>Prev</button>
+                <button type="button" class="btn btn-secondary float-right" 
+                onclick="window.location.href='/quiz/questions/{{object.quizid}}/{{object.qid}}/next'"
+                {%if object.next_disable == "1" %} disabled {%endif%}>Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

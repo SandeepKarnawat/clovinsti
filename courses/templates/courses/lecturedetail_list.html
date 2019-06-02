@@ -1,0 +1,339 @@
+{% extends 'base.html' %}
+{% load define %}
+{%block content%}
+<div class="container-fluid">
+    
+    <div class="row no-gutters">
+        <div class="col-4">
+            <div class="alert alert-secondary"  id="lectureTitlePane" role="alert" style="height: 600px; overflow-y: scroll;">
+            Topics
+            <div id="accordion">
+            {% for obj in object_list %}                        
+                <div class="card">
+                    <div class="card-header" id="headingOne">
+                    <h5 class="mb-0">
+                        <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="true" aria-controls="collapseOne">
+                        {{obj.section}}
+                        </button>
+                    </h5>
+                    </div>
+                
+                    <div id="collapse{{forloop.counter}}" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for lecture in obj.lectures %}
+                            <li class="list-group-item" id="{{lecture.id}}"><a href="javascript:void(0);" 
+                                onclick="loadLecture('{{subjectId}}', '{{lecture.id}}', '{{lecture.url}}','{{lecture.title}}')">
+                                {{lecture.title}}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    </div>
+                </div>
+        {% endfor %}
+        </div>
+        </div>
+        </div>
+        <div class ="col-8">
+            <div id="lectureVideoDiv" class="alert alert-primary"  role="alert">
+                Lecture Video
+            </div>
+            <div id="lectureQADiv" class="alert alert-primary"  role="alert">
+                Lecture QA Forum
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'snippets/post_question.html' with qform=qform %}
+{% include 'snippets/post_answer.html' with aform=aform %}
+{% include 'auth/login_dialog.html' with form=lform %}
+{% endblock %}
+
+{% block javascript %}
+<script>
+    function signinAjax(){
+        console.log("signinAjax() called")
+        var csrftoken = getCookie('csrftoken');
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.ajax({
+        url: "{% url 'login_ajax' %}",
+        method: "POST",
+        data: {'username':$("#id_username").val(), 'password':$("#id_password").val()},
+        dataType: 'json',
+        success: function (data) {
+            if (data.user){
+                console.log("Login success")
+                $('#signinModal').modal('toggle');
+                // next = $('#signinModal').attr('nextModal');
+                // $('#'+ next).modal("toggle");
+            }
+            else{
+                console.log("Login Failed")
+            }
+        }
+      });
+    }
+
+    function setAnswerModal(i) {
+        console.log("answerbuttonid", i)
+        $("#answerModalLabel").html($("#q"+i).text());
+        document.getElementById("questionId").value = i;
+        $("#answerModal").modal('toggle');
+    }
+
+    function setQuestionModal(){
+        $("#questionModal").modal('toggle');
+    }
+
+    function getQAForumData(lectureid){
+        $.ajax({
+        url: "{% url 'lecture_qaforum' %}",
+        method: "GET",
+        data: {'lectureid':lectureid},
+        dataType: 'json',
+        success: function (qaforum) {
+            if (qaforum.data){
+                loadQAForum(qaforum.data);
+            }
+            else{
+                console.log("These is no qaforum data")
+            }
+        }
+      });
+    }
+
+    function postAnswer() {
+        console.log("postAnswer() is called")
+        var csrftoken = getCookie('csrftoken');
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.ajax({
+        url: "{{request.path}}",
+        method: "POST",
+        data: {'post_request': 'answer',
+                'answer'     : $("#id_answer").val(),
+                'questionId' : $('input#questionId').val(),
+                'lectureId'  : $('input#lecutureId').val()},
+        dataType: 'json',
+        success: function (qaforum) {
+            if (qaforum.data){
+                console.log("resp.data");
+                $("#answerModal").modal('toggle');
+                loadQAForum(qaforum.data);
+
+            }
+            else{
+                console.log("Failed to post question");
+            }
+        },
+        statusCode: {
+            401: function () {
+                console.log("unauthorized access");
+                $("#signinModal").modal('toggle');
+            }
+        },
+      });
+    }
+
+    function postQuestion() {
+        console.log("postQuestion() called")
+        var csrftoken = getCookie('csrftoken');
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.ajax({
+        url: "{{request.path}}",
+        method: "POST",
+        data: {'post_request': 'question', 'question':$("#id_question").val(), 'lectureId':$('input#lecutureId').val()},
+        dataType: 'json',
+        success: function (qaforum) {
+            if (qaforum.data){
+                console.log("resp.data");
+                $("#questionModal").modal('toggle');
+                loadQAForum(qaforum.data);
+
+            }
+            else{
+                console.log("Failed to post question");
+            }
+        },
+        statusCode: {
+            401: function () {
+                console.log("unauthorized access");
+                //$("#signinModal").attr('nextModal', 'questionModal');
+                $("#signinModal").modal('toggle');
+            }
+        },
+      });
+    }
+
+    function postCourseStuding(subjectId, lectureId) {
+        console.log("postCourseStuding() is called")
+        var csrftoken = getCookie('csrftoken');
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        $.ajax({
+        url: "{{request.path}}",
+        method: "POST",
+        data: { 'post_request'  : 'studing',
+                'subjectId'     : subjectId,
+                'lectureId'     : lectureId},
+        dataType: 'json',
+        statusCode: {
+            401: function () {
+                console.log("unauthorized access");
+            },
+            404: function () {
+                console.log("Bad request");
+            }
+        },
+      });
+    }
+
+    function loadLecture(subjectId, lectureId, url, lecture_title) {
+        
+        document.getElementById("lectureVideoDiv").innerHTML =
+        `<div class='embed-responsive embed-responsive-16by9'>
+                <iframe class='embed-responsive-item' src='${url}' allowfullscreen></iframe>
+        </div>`;
+
+        document.getElementById("questionModalLabel").innerHTML = lecture_title;
+        document.getElementById("lecutureId").value = lectureId;
+
+        var lectureHtml = `
+        <p>
+            <div class="row">
+                <div class="col-12 text-center"><h4>${lecture_title}</h4></div>
+                <button type="button" class="btn btn-primary" 
+                data-toggle="modal" onclick="setQuestionModal()">Ask Question</button>
+            </div>
+        </p>
+        <div id="qaforumdata"></div>
+        `;
+        document.getElementById("lectureQADiv").innerHTML = lectureHtml;
+        $("#"+lectureId).addClass("active")
+        $("#"+lectureId+" a").addClass("text-white")        
+        getQAForumData(lectureId);
+        {% if request.user.is_authenticated %}
+            postCourseStuding(subjectId, lectureId)
+        {% endif %}
+    }
+
+
+    function loadQAForum(qalist) {
+        // Display Q&A
+        console.log(qalist)
+        if (qalist == undefined) {
+            return;
+        }
+        var qaForumHtml = ""
+        var list = JSON.parse(qalist)
+        console.log(list.length);
+        for(var i = 0, size = list.length; i < size ; i++){
+            var qa = list[i];
+            var qastr = JSON.stringify(qa["question"]);
+            qaForumHtml += `
+                    <p>
+                    <div class="row">
+                        <span class="col-1 text-left">
+                            <table class="table">
+                            <tr>
+                                Q. ${i+1}
+                            </tr>
+                            <tr>
+                                <td class="pl-4">
+                                    <a href="#">
+                                            <i class="far fa-caret-square-up"></i>
+                                    </a>
+                                    <br/>${qa["question"].votes}<br/>
+                                    <a href="#">
+                                            <i class="far fa-caret-square-down"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </table>        
+                        </span>
+                        <span class="col-11">
+                            <h5 id="q${qa["question"].qid}"> ${qa["question"].question} </h5>
+                            <p >
+                                <i class="far fa-clock"></i>
+                                <span font-weight-light>${qa["question"].pub_date}</span>
+                                <span class="border-left border-secondary"><a class="ml-1" href="#">${qa["question"].author}</a></span>
+                            </p>
+                            <p>
+                                <button id="ansbttn${qa["question"].qid}" type="button" class="btn btn-primary" 
+                                data-toggle="modal" onclick=setAnswerModal('${qa["question"].qid}')>Answer</button>
+                            </p>
+                        </span>
+                    </div>
+                    
+                    <div class="row">
+                            <div class="col-12">&nbsp;</div>
+                        <div class="col-12">&nbsp;${qa["answers"].length} Answers 
+                                
+                        </div>
+                        <div class="col-12"><hr></div>
+                    </div>
+                    </p>
+                    `;
+            
+            for(var j=0, sz=qa["answers"].length; j<sz; j++){
+                qaForumHtml+=
+                `
+                <p>
+                <div class="row">
+                    <div class="col-1">
+                        <a class="mx-3" href="#">
+                            <i class="far fa-caret-square-up"></i>
+                        </a>
+                        <br/><span class="mx-3">${qa["answers"][j].votes}</span><br/>
+                        <a class="mx-3" href="#">
+                            <i class="far fa-caret-square-down"></i>
+                        </a>
+                        <hr>
+                    </div>
+                    <div class="col-11">
+                        ${qa["answers"][j].answer}
+                        <p >
+                            <i class="far fa-clock"></i>
+                            <span font-weight-light>${qa["answers"][j].pub_date}</span>
+                            <span class="border-left border-secondary"><a class="ml-1" href="#">${qa["answers"][j].author}</a></span>
+                        </p>
+                    </div>
+                </div>
+                </p>
+                `;
+            }
+        }
+        document.getElementById("qaforumdata").innerHTML = qaForumHtml;
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if lectureId %}
+            loadLecture('{{subjectId}}', '{{lectureId}}', '{{lectureUrl}}','{{lectureTitle}}');
+        {% else %}
+            loadLecture('{{subjectId}}', '{{object_list.0.lectures.0.id}}', '{{object_list.0.lectures.0.url}}','{{object_list.0.lectures.0.title}}');
+        {% endif %}
+     });
+</script>
+{% endblock %}
